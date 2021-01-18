@@ -63,24 +63,7 @@ TEST(hm, CustomKey) {
   struct A {
     A() {}
     A(const char *first) : m_first(first) {}
-    A(const A &other) {
-      if (this != &other) {
-        m_first = other.m_first;
-      }
-    }
-    A(A &&other) { m_first = std::move(other.m_first); }
-    A &operator=(const A &other) {
-      m_first = other.m_first;
-      return *this;
-    }
-    A &operator=(A &&other) {
-      m_first = std::move(other.m_first);
-      return *this;
-    }
     bool operator==(const A &other) {
-      if (this == &other) {
-        return true;
-      }
       if (m_first == other.m_first) {
         return true;
       }
