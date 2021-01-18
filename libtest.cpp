@@ -52,10 +52,54 @@ TEST(hm, PreservesOnResize) {
   ASSERT_EQ(hm_.exists(140), true);
   fmt::print("-----------------\n");
   std::mt19937 gen;
-  // seed the engine with an unsigned int
   gen.seed(11);
   std::uniform_int_distribution<> distrib(200, 300);
   for (size_t i = 0; i < 40; ++i) {
     ASSERT_EQ(hm_.exists(distrib(gen)), false);
   }
+}
+
+TEST(hm, CustomKey) {
+  struct A {
+    A() {}
+    A(const char *first) : m_first(first) {}
+    A(const A &other) {
+      if (this != &other) {
+        m_first = other.m_first;
+      }
+    }
+    A(A &&other) { m_first = std::move(other.m_first); }
+    A &operator=(const A &other) {
+      m_first = other.m_first;
+      return *this;
+    }
+    A &operator=(A &&other) {
+      m_first = std::move(other.m_first);
+      return *this;
+    }
+    bool operator==(const A &other) {
+      if (this == &other) {
+        return true;
+      }
+      if (m_first == other.m_first) {
+        return true;
+      }
+      return false;
+    }
+    ~A() {}
+    std::string m_first{};
+  };
+  struct hasher {
+    size_t operator()(const A &a) const {
+      size_t res = 17;
+      res = res * 31 + std::hash<std::string>()(a.m_first);
+      return res;
+    }
+  };
+
+  lite::hm<A, std::string, hasher> hm_{};
+  A a{"key1"};
+  hm_.insert(a, "hello world!!!");
+  ASSERT_EQ(hm_.exists("key1"), true);
+  ASSERT_EQ(hm_.exists("key2"), false);
 }

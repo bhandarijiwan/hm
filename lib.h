@@ -1,6 +1,7 @@
 #ifndef LIB_HPP
 #define LIB_HPP
 #include "fmt/core.h"
+#include "fmt/ostream.h"
 #include <iostream>
 #include <optional>
 #include <tuple>
@@ -19,7 +20,7 @@ class hm {
   static constexpr double expected_load_factor = 0.75;
 
 private:
-  template <typename k = key> size_t index(const k &k_, size_t s) {
+  size_t index(const key &k_, size_t s) {
     size_t h = hash()(k_);
     return h % s;
   }
@@ -76,7 +77,7 @@ public:
   explicit hm() : m_nodes(), m_count(0) { m_nodes.reserve(13); }
   auto size() const { return m_count; }
 
-  template <typename k = key> bool exists(const k &&k_) {
+  bool exists(const key &k_) {
     size_t idx = probe(index(k_, m_nodes.capacity()), k_, m_nodes);
     if (idx >= m_nodes.capacity() || !m_nodes[idx]) {
       return false;
@@ -84,15 +85,21 @@ public:
     return true;
   }
 
-  template <class k = key, class v = value> void insert(k &&k_, v &&v_) {
+  template <class v = value> void insert(const key &k_, v &&v_) {
     auto load_factor = static_cast<double>(m_count + 1) /
                        static_cast<double>(m_nodes.capacity());
     if (load_factor > expected_load_factor) {
       resize(m_nodes.capacity() * 2);
     }
     auto idx = probe(index(k_, m_nodes.capacity()), k_, m_nodes);
-    emplace_at(&m_nodes[idx], std::forward<k>(k_), std::forward<v>(v_));
+    emplace_at(&m_nodes[idx], k_, std::forward<v>(v_));
     m_count += 1;
+  }
+
+  ~hm() {
+    for (size_t i = 0; i < m_nodes.capacity(); ++i) {
+      m_nodes[i].~element_type();
+    }
   }
 };
 
