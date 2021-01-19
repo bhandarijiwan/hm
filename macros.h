@@ -4,6 +4,8 @@
 
 #ifndef HM_MACROS_H
 #define HM_MACROS_H
+#include "fmt/core.h"
+#include <chrono>
 #define CAT(x, y) x##_##y
 
 #define INS_BEGIN(x) auto CAT(x, _begin) = std::chrono::steady_clock::now();
