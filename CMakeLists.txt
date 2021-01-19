@@ -28,7 +28,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(gtest)
 FetchContent_MakeAvailable(fmt)
 
-set(headers lib.h)
+set(headers lib.h macros.h)
 set(sources lib.cpp)
 add_library(${project} STATIC ${sources} ${headers})
 target_link_libraries(${project} PRIVATE fmt::fmt) 
