@@ -100,6 +100,7 @@ public:
     return true;
   }
 
+  // TODO: overload insert to accept universal reference to key.
   template <class v = value> void insert(const key &k_, v &&v_) {
     auto l = load_factor();
     if (l > expected_load_factor) {
@@ -110,6 +111,8 @@ public:
     m_count += 1;
   }
 
+  // TODO: reference_wrapper makes the api ugly and cumbersome to use, figure
+  // out to remove reference_wrapper from return type.
   return_type get(const key &k_) const {
     auto idx = probe(index(k_, m_nodes.capacity()), k_, m_nodes);
     if (idx < m_nodes.capacity()) {
