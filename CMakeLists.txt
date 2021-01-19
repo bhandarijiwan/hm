@@ -32,7 +32,7 @@ set(headers lib.h)
 set(sources lib.cpp)
 add_library(${project} STATIC ${sources} ${headers})
 target_link_libraries(${project} PRIVATE fmt::fmt) 
-target_compile_options(${project} PRIVATE -Werror -Wall -Wextra)
+target_compile_options(${project} PRIVATE -Werror -Wall -Wextra -Wpedantic )
 
 
 set(test_project "${project}-test")

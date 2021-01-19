@@ -1,4 +1,6 @@
 #include <random>
+#include <tuple>
+#include <unordered_map>
 
 #include "fmt/core.h"
 #include "fmt/ostream.h"
@@ -63,7 +65,7 @@ TEST(hm, CustomKey) {
   struct A {
     A() {}
     A(const char *first) : m_first(first) {}
-    bool operator==(const A &other) {
+    bool operator==(const A &other) const {
       if (m_first == other.m_first) {
         return true;
       }
@@ -85,4 +87,61 @@ TEST(hm, CustomKey) {
   hm_.insert(a, "hello world!!!");
   ASSERT_EQ(hm_.exists("key1"), true);
   ASSERT_EQ(hm_.exists("key2"), false);
+}
+
+TEST(hm, Get) {
+  struct A {
+    A() {}
+    A(const char *first) : m_first(first) {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
+    }
+    A(const A &other) {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
+      if (this != &other) {
+        m_first = other.m_first;
+      }
+    }
+    A(A &&other) {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
+      m_first = std::move(other.m_first);
+    }
+    A &operator=(const A &other) {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
+      m_first = other.m_first;
+      return *this;
+    }
+    A &operator=(A &&other) {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
+      m_first = std::move(other.m_first);
+      return *this;
+    }
+    bool operator==(const A &other) const {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
+      if (this == &other) {
+        return true;
+      }
+      if (m_first == other.m_first) {
+        return true;
+      }
+      return false;
+    }
+    ~A() { fmt::print("{}\n", __PRETTY_FUNCTION__); }
+    std::string m_first{};
+  };
+  struct hasher {
+    size_t operator()(const A &a) const {
+      size_t res = 17;
+      res = res * 31 + std::hash<std::string>()(a.m_first);
+      return res;
+    }
+  };
+
+  lite::hm<A, std::string, hasher> m{};
+  m.insert("key1", "hello world");
+  fmt::print("After insert\n");
+  auto &v = m.get("key1");
+  ASSERT_EQ(v.has_value(), true);
+  ASSERT_EQ(v.value().second, "hello world");
+  ASSERT_EQ(m.get("key2").has_value(), false);
+  ASSERT_EQ(m.get("key1").value().second, "hello world");
 }

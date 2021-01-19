@@ -1,11 +1,14 @@
 #ifndef LIB_HPP
 #define LIB_HPP
-#include "fmt/core.h"
-#include "fmt/ostream.h"
 #include <iostream>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 #include <vector>
+
+#include "fmt/core.h"
+#include "fmt/ostream.h"
+
 namespace lite {
 namespace detail {}
 
@@ -19,13 +22,17 @@ class hm {
 
   static constexpr double expected_load_factor = 0.75;
 
+  static_assert(std::is_copy_constructible_v<key>,
+                "key should be copy constructible.\n");
+
 private:
-  size_t index(const key &k_, size_t s) {
+  size_t index(const key &k_, size_t s) const {
     size_t h = hash()(k_);
     return h % s;
   }
   template <typename k = key>
-  [[nodiscard]] size_t probe(size_t i, k &&k_, container_type &nodes_) {
+  [[nodiscard]] size_t probe(size_t i, const k &k_,
+                             const container_type &nodes_) const {
     for (size_t j = i; j < nodes_.capacity(); ++j) {
       if (!nodes_[j] || nodes_[j].value().first == k_) {
         return i + (j - i);
@@ -58,6 +65,12 @@ private:
     }
     m_nodes = std::move(new_m_nodes);
   }
+
+  float load_factor() {
+    return static_cast<float>(m_count + 1) /
+           static_cast<float>(m_nodes.capacity());
+  }
+
   friend std::ostream &operator<<(std::ostream &out, const hm &m) {
     out << "size = " << m.m_nodes.size() << "[\n";
     for (size_t i = 0; i < m.m_nodes.capacity(); ++i) {
@@ -86,14 +99,21 @@ public:
   }
 
   template <class v = value> void insert(const key &k_, v &&v_) {
-    auto load_factor = static_cast<double>(m_count + 1) /
-                       static_cast<double>(m_nodes.capacity());
-    if (load_factor > expected_load_factor) {
+    auto l = load_factor();
+    if (l > expected_load_factor) {
       resize(m_nodes.capacity() * 2);
     }
     auto idx = probe(index(k_, m_nodes.capacity()), k_, m_nodes);
     emplace_at(&m_nodes[idx], k_, std::forward<v>(v_));
     m_count += 1;
+  }
+
+  const element_type &get(const key &k_) const {
+    auto idx = probe(index(k_, m_nodes.capacity()), k_, m_nodes);
+    if (idx < m_nodes.capacity()) {
+      return m_nodes[idx];
+    }
+    return std::nullopt;
   }
 
   ~hm() {
