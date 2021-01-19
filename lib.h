@@ -1,5 +1,6 @@
 #ifndef LIB_HPP
 #define LIB_HPP
+#include <functional>
 #include <iostream>
 #include <optional>
 #include <tuple>
@@ -17,6 +18,7 @@ class hm {
   using node_type = std::pair<key, value>;
   using element_type = std::optional<node_type>;
   using container_type = std::vector<element_type>;
+  using return_type = std::optional<std::reference_wrapper<const node_type>>;
   container_type m_nodes;
   size_t m_count{};
 
@@ -108,10 +110,10 @@ public:
     m_count += 1;
   }
 
-  const element_type &get(const key &k_) const {
+  return_type get(const key &k_) const {
     auto idx = probe(index(k_, m_nodes.capacity()), k_, m_nodes);
     if (idx < m_nodes.capacity()) {
-      return m_nodes[idx];
+      return std::reference_wrapper(m_nodes[idx].value());
     }
     return std::nullopt;
   }

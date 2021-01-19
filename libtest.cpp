@@ -138,10 +138,10 @@ TEST(hm, Get) {
 
   lite::hm<A, std::string, hasher> m{};
   m.insert("key1", "hello world");
-  fmt::print("After insert\n");
-  auto &v = m.get("key1");
-  ASSERT_EQ(v.has_value(), true);
-  ASSERT_EQ(v.value().second, "hello world");
+  auto v1 = m.get("key1");
+  ASSERT_EQ(v1.has_value(), true);
+  ASSERT_EQ(v1.value().get().second, "hello world");
   ASSERT_EQ(m.get("key2").has_value(), false);
-  ASSERT_EQ(m.get("key1").value().second, "hello world");
+  auto v2 = m.get("key2");
+  ASSERT_EQ(v2.value().get().second, "hello world");
 }
